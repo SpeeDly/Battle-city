@@ -1,0 +1,67 @@
+<html>
+<head>
+    <link rel="stylesheet" href="static/css/style.css">
+    <script src="static/js/jquery-1.11.2.min.js"></script>
+    <script src="https://cdn.socket.io/socket.io-1.2.1.js"></script>
+    <script>var socket = io();</script>
+</head>
+<body>
+    <div id="index" class="screen">
+        <h1>
+            BATTLE<br>CITY
+        </h1>
+
+        <div id="menu">
+            <ul>
+                <li class="active" data-choice="1"><div class="tank"></div><span>Create Game</span></li>
+                <li data-choice="2"><div class="tank"></div><span>Join Game</span></li>
+            </ul>
+        </div>
+
+        <div id="footer">
+            2014 Georgi Zhuhov
+        </div>
+    </div>
+    <div id="create" class="screen hidden">
+        <div>
+            <label for="map_name">Load map:</label>
+            <select id="map_name">
+                <option value="1">Real Map</option>
+            </select>
+        </div>
+        <div>
+            <label for="id_name">Enter name:</label>
+            <input id="id_name" type="text" value="">
+        </div>
+        <div>
+            <label for="id_room">Game name:</label>
+            <input id="id_room" type="text" value="">
+        </div>
+        <button id="create_game" value="Start">Start</button>
+    </div>
+    <div id="join" class="screen hidden">
+        <label for="id_blocks">Enter your name:</label>
+        <input id="id_name2" type="text" value="koce">
+        <label for="id_blocks">Select room: <i>Refresh</i></label>
+        <div id="rooms">
+            
+        </div>
+        <button id="join_game" value="Join Game">Join Game</button>
+    </div>
+    <div id="wait" class="hidden">
+        <div>Wait for the other people before you start the game !!!</div>
+        <div id="connected_players"></div>
+        <button id="start_real_game" class="hidden" value="Start">Start</button>
+    </div>
+    <div id="snake" class="hidden">
+        <ul class="score">
+        </ul>
+        <div id="game">
+
+        </div>
+    </div>
+    <script src="static/js/snake.js"></script>
+    <script src="static/js/game.js"></script>
+    <script src="static/js/index.js"></script>
+</body>
+</html>

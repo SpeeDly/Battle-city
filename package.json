@@ -1,0 +1,15 @@
+{
+  "name": "BattleCity",
+  "version": "0.0.0",
+  "description": "Battle City remake for multyplayer online game",
+  "main": "server/server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Georgi Zhuhov",
+  "license": "MIT",
+  "dependencies": {
+    "express": "~4.10.7",
+    "socket.io": "~1.2.1"
+  }
+}
