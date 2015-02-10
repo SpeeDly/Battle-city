@@ -3,6 +3,16 @@ var app = express();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 
+app.get('/', function (req, res) {
+    res.sendFile(__dirname + "/app/index.html");
+})
+
+app.use("/static", express.static(__dirname + "/app/static"));
+
+http.listen(3000, function(){
+    console.log("The server is working");
+});
+
 var Block = function (row, col, state, blockSize) {
     this.row = row;
     this.col = col;
@@ -185,71 +195,112 @@ Snake.prototype.go = function(direction) {
     return result;
 };
 
+var Player = function(room_id, name, socket_id, team){
+    this.room_id = room_id;
+    this.name = name;
+    this.socket_id = socket_id;
+    this.team = 0;
+}
 
+var Room = function(id, name){
+    this.id = id;
+    this.name = name;
+    this.players = [];
+}
 
-app.get('/', function (req, res) {
-    res.sendFile(__dirname + "/app/index.html");
-})
+Room.prototype.addPlayer = function(player_name, socket_id) {
+    var player = new Player(this.id, player_name, socket_id);
+    this.players.push(player);
+};
 
-app.use("/static", express.static(__dirname + "/app/static"));
+Room.prototype.getPlayersNames = function() {
+    return this.players.map(function(player){
+                return player.name;
+            })
+};
 
-http.listen(3000, function(){
-    console.log("Snake is working");
-});
+Room.prototype.getPlayerBySocketId = function(socket_id) {
+    for (var i = 0; i < this.players.length; i++) {
+        if(this.players[i].socket_id == socket_id){
+            return this.players[i];
+        }
+    };
+    return false;
+};
+
+Room.prototype.removePlayerBySocketId = function(socket_id) {
+    for (var i = 0; i < this.players.length; i++) {
+        if (this.players[i].socket_id == socket_id) {
+            delete this.players[i];
+            this.players.splice(i,1);
+            break;
+        };
+    };
+};
+
+Room.prototype.deleteAllPlayers = function() {
+    for (var i = 0; i < this.players.length; i++) {
+        delete this.players[i];
+    };
+};
 
 
 var rooms = [];
 
-function getRoomIDbyName(name){
-    var room_id = false;
-    rooms.forEach(function(room){
-        if (room.name == name) {
-            room_id = room.id;
+function getRoomByName(name){
+    var room = false;
+    rooms.forEach(function(r){
+        if (name === r.name) {
+            room = r;
         }
     });
-    return room_id;
+    return room;
 }
 
+function getRoomById(id){
+    var room = false;
+    rooms.forEach(function(r){
+        if (id === r.id) {
+            room = r;
+        }
+    });
+    return room;
+}
 
 io.on('connection', function (socket) {
 
     socket.on('getRoomsReq', function () {
-        var names = [];
+        var data = [];
         rooms.forEach(function(room){
-            names.push(room.name)
+            var tempData = {}
+            tempData.id = room.id;
+            tempData.name = room.name;
+            data.push(tempData);
         });
-        socket.emit("getRoomsResp", {"rooms": names});
+        socket.emit("getRoomsResp", {"rooms": data});
     });
 
     socket.on('joinNewPlayer', function (data) {
         var names = [],
-            room_id;
-        room_id = getRoomIDbyName(data.room);
+            room;
 
-        if(room_id !== false){
-            rooms[room_id].playerNames.push(data.name);
-            names = rooms[room_id].playerNames;
-        }
-        else{
-            var lastId = rooms.length === 0 ? -1 : rooms[rooms.length-1].id;
-            lastId++;
-            var room = {
-                id: lastId,
-                name: data.room,
-                playerNames: [data.name],
-            }
-            names = room.playerNames;
+        room = getRoomById(data.room_id);
+        console.log("room.id", room.id);
+        console.log("data", data.room_id);
+        if(!room){
+            room = new Room(socket.id, data.room)
             rooms.push(room);
         }
 
-        socket.join(data.room);
-
-        io.to(data.room).emit("joinedPlayer", {"names": names});
+        room.addPlayer(data.name, socket.id);
+        names = room.getPlayersNames();
+        socket.join(room.name);
+        io.to(room.name).emit("joinedPlayer", {"names": names});
     });
 
+
     socket.on('createGame', function (data) {
-        var room_id = getRoomIDbyName(data.room);
-        var room = rooms[room_id];
+        var room = rooms[getRoomIDbyName(data.room)];
         room.map = new Map(data.rows, data.cols, data.size);
         room.board = room.map.generate();
         room.snakes = [];
@@ -276,9 +327,34 @@ io.on('connection', function (socket) {
         io.to(room.name).emit('nextMove', result);
     });
 
-    socket.on('endGame', function (data) {
-        var index = getRoomIDbyName(data.room);
-        if(index !== false){
+    socket.on('disconnect', function() {
+        var index = -1,
+            names = [],
+            room = 0;
+        rooms.forEach(function(room, i){
+            if (room.id === socket.id) {
+                index = i;
+            };
+        });
+
+        if(index === -1){
+            rooms.forEach(function(r){
+                if(r.getPlayerBySocketId(socket.id)){
+                    room = r;
+                }
+            });
+            if(room){
+                console.log("yesbe");
+                room.removePlayerBySocketId(socket.id);
+                names = room.getPlayersNames();
+                io.to(room.name).emit("updatePlayers", {"names": names});
+            }
+        }
+        else{
+            // if the leaved player is host, delete the room
+            io.to(rooms[index].name).emit("gameEnd", {});
+            rooms[index].deleteAllPlayers();
+            delete rooms[index];
             rooms.splice(index, 1);
         }
     });

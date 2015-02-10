@@ -22,37 +22,47 @@
             2014 Georgi Zhuhov
         </div>
     </div>
+
     <div id="create" class="screen hidden">
-        <div>
-            <label for="map_name">Load map:</label>
-            <select id="map_name">
-                <option value="1">Real Map</option>
-            </select>
+        <div class="box">
+            <div>
+                <label for="map_name">Load map:</label>
+                <select id="map_name">
+                    <option value="1">Real Map</option>
+                </select>
+            </div>
+            <div>
+                <label for="id_name">Enter name:</label>
+                <input id="id_name" type="text" value="">
+            </div>
+            <div>
+                <label for="id_room">Game name:</label>
+                <input id="id_room" type="text" value="">
+            </div>
+            <button id="create_game" value="Start">Start</button>
         </div>
-        <div>
-            <label for="id_name">Enter name:</label>
-            <input id="id_name" type="text" value="">
-        </div>
-        <div>
-            <label for="id_room">Game name:</label>
-            <input id="id_room" type="text" value="">
-        </div>
-        <button id="create_game" value="Start">Start</button>
     </div>
+
     <div id="join" class="screen hidden">
-        <label for="id_blocks">Enter your name:</label>
-        <input id="id_name2" type="text" value="koce">
-        <label for="id_blocks">Select room: <i>Refresh</i></label>
-        <div id="rooms">
-            
+        <div class="box">
+            <label for="id_blocks">Enter your name:</label>
+            <input id="id_name2" type="text" value="koce">
+            <label for="id_blocks">Select room: <i>Refresh</i></label>
+            <div id="rooms">
+                
+            </div>
+            <button id="join_game" value="Join Game">Join Game</button>
         </div>
-        <button id="join_game" value="Join Game">Join Game</button>
     </div>
-    <div id="wait" class="hidden">
-        <div>Wait for the other people before you start the game !!!</div>
-        <div id="connected_players"></div>
+    <div id="wait" class="screen hidden">
+        <div class="title">Wait for the other people before you start the game !!!</div>
+        <div class="classify">
+            <ul id="good" class="teaming"></ul>
+            <ul id="bad" class="teaming"></ul>
+        </div>
         <button id="start_real_game" class="hidden" value="Start">Start</button>
     </div>
+
     <div id="snake" class="hidden">
         <ul class="score">
         </ul>
@@ -60,6 +70,7 @@
 
         </div>
     </div>
+
     <script src="static/js/snake.js"></script>
     <script src="static/js/game.js"></script>
     <script src="static/js/index.js"></script>
