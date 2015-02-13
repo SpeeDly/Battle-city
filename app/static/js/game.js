@@ -1,13 +1,6 @@
 function init(board){
-    "use strict";
     var interval, command, snake, name, room;
-    name = $("#id_realname").val();
-    snake = $("#connected_players ." + name).data("snake");
-    room = $("#room_name").val();
-
-    $(".start_game").addClass("hidden");
-    $("#snake").removeClass("hidden");
-
+    
     game = new Game(board);
     game.generate();
 

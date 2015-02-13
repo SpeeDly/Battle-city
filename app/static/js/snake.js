@@ -1,3 +1,5 @@
+
+
 var Block = function (row, col, state, size, snake_id) {
     this.row = row;
     this.col = col;

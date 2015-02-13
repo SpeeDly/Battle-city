@@ -41,6 +41,7 @@ function createGame(){
         else{
             socket.emit('joinNewPlayer', data);
             closeCreateGame();
+            gameInfo.isHost = true;
         }
     });
 }
@@ -64,9 +65,11 @@ function joinGame(){
 
         gameInfo.room_id = joinRoom.room_id;
         gameInfo.name = joinRoom.room;
+        gameInfo.map = $("#map_name").val();
         gameInfo.my_name = joinRoom.name;
         gameInfo.socket_id = socket.id;
         closeJoinGame();
+        gameInfo.isHost = false;
     });
 }
 
@@ -99,16 +102,32 @@ socket.on('updatePlayers', function(data){
 });
 
 function handleJoinedPlayer(names){
+    gameInfo.players = [];
     $(".teaming").html("");
-    names.forEach(function(name, i){
+    names.forEach(function(data, i){
         if (i%2) {
-            $("#bad").append("<li data-team='1'>" + name + "</li>");
+            $("#bad").append("<li data-team='1' data-playerid=" + data.id + ">" + data.name + "</li>");
+            gameInfo.players.push({"player_id": data.id, "team": 1 });
         }
         else{
-            $("#good").append("<li data-team='0'>" + name + "</li>");
+            $("#good").append("<li data-team='0' data-playerid=" + data.id + ">" + data.name + "</li>");
+            gameInfo.players.push({"player_id": data.id, "team": 0 });
         }
     });
+
+    if(data.length > 1 && gameInfo.isHost){
+        $("#start_real_game").show();
+    }
 }
+
+$("#start_real_game").click(function(){
+    socket.emit('startNewGame', {"gameInfo": gameInfo});
+})
+
+socket.on('createdGame', function(data){
+    $("#wait").show();
+    handleJoinedPlayer(data.names);
+});
 
 // clean methods
 function closeIndex(){
