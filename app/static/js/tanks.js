@@ -1,11 +1,42 @@
+var Game = function(room, board){
+    this.room_id = room.id;
+    this.game_name = room.name;
+    this.players = room.players;
+    room.players.forEach(function(player){
+        if(player.socket_id === socket.id){
+            this.player_name = player.name;
+        }
+    });
 
+    for (var i = 0; i < board.length; i++) {
+        for (var j = 0; j < board[i].length; j++) {
+            board[i][j] = castToBlock(board[i][j]);
+        };
+    };
 
-var Block = function (row, col, state, size, snake_id) {
+    this.board = board;
+}
+
+Game.prototype.generate = function() {
+    $("#battleTanks").show();
+    $("#game").css({
+        "width": this.board[0][0].size*this.board[0].length,
+        "height": this.board[0][0].size*this.board.length,
+    });
+
+    this.board.forEach(function(blocks){
+        blocks.forEach(function(block){
+            block.draw();
+        })
+    })
+}
+
+var Block = function (row, col, state, size, tank_id) {
     this.row = row;
     this.col = col;
     this.state = state;
-    this.size = size;
-    this.snake_id = snake_id;
+    this.size = 24;
+    this.tank_id = tank_id;
 };
 
 Block.prototype.draw = function() {
@@ -13,11 +44,17 @@ Block.prototype.draw = function() {
     if (this.state === 0) {
         pixel += '';
     }
-    else if(this.snake_id === 0 && this.state === 1){
+    else if(this.state === 1){
         pixel += 'wall';
     }
+    else if(this.state === 2){
+        pixel += 'water';
+    }
+    else if(this.state === 3){
+        pixel += 'grass';
+    }
     else{
-        pixel += 'snake_' + this.snake_id;
+        pixel += 'tank_' + this.tank_id;
     }
     pixel += '" style="width:';
     pixel += this.size;
@@ -58,27 +95,6 @@ Block.prototype.render = function() {
 };
 
 
-var Game = function (blocks) {
-    $("#game").css({
-        "width": blocks[0][0].size*blocks[0].length,
-        "height": blocks[0][0].size*blocks.length,
-    });
-    for (var i = 0; i < blocks.length; i++) {
-        for (var j = 0; j < blocks[i].length; j++) {
-            blocks[i][j] = castToBlock(blocks[i][j]);
-        };
-    };
-    this.board = blocks;
-};
-
-Game.prototype.generate = function() {
-    this.board.forEach(function(blocks){
-        blocks.forEach(function(block){
-            block.draw();
-        })
-    })
-};
-
 Game.prototype.render = function(blocks) {
     var allBlocks = this.board.reduce(function(a, b) {
         return a.concat(b);
@@ -103,5 +119,5 @@ Game.prototype.render = function(blocks) {
 };
 
 function castToBlock(el) {
-    return new Block(el.row, el.col, el.state, el.size, el.snake_id);
+    return new Block(el.row, el.col, el.state, el.size, el.tank_id);
 };

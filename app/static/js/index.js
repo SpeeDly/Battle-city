@@ -41,7 +41,11 @@ function createGame(){
         else{
             socket.emit('joinNewPlayer', data);
             closeCreateGame();
+
+            gameInfo.name = data.room;
+            gameInfo.my_name = data.name;
             gameInfo.isHost = true;
+            gameInfo.map = $("#map_name option:selected").text();
         }
     });
 }
@@ -65,7 +69,6 @@ function joinGame(){
 
         gameInfo.room_id = joinRoom.room_id;
         gameInfo.name = joinRoom.room;
-        gameInfo.map = $("#map_name").val();
         gameInfo.my_name = joinRoom.name;
         gameInfo.socket_id = socket.id;
         closeJoinGame();
@@ -81,13 +84,13 @@ $("#join label i").click(function(){
 
 socket.on('joinedPlayer', function(data){
     $("#wait").show();
+    gameInfo.room_id = data.room_id;
     handleJoinedPlayer(data.names);
 });
 
 socket.on('getRoomsResp', function(data){
     $("#rooms").html("");
     data.rooms.forEach(function(room){
-        console.log(room.id);
         $("#rooms").append("<div class='room' data-socketid=" + room.id + ">" + room.name + "</div>")
     });
     $("#rooms").children().eq(0).addClass("active");
@@ -98,6 +101,7 @@ socket.on('gameEnd', function(){
 });
 
 socket.on('updatePlayers', function(data){
+    gameInfo.room_id = data.room_id;
     handleJoinedPlayer(data.names);
 });
 
@@ -115,18 +119,18 @@ function handleJoinedPlayer(names){
         }
     });
 
-    if(data.length > 1 && gameInfo.isHost){
+    if(names.length > 1 && gameInfo.isHost){
         $("#start_real_game").show();
     }
 }
 
 $("#start_real_game").click(function(){
-    socket.emit('startNewGame', {"gameInfo": gameInfo});
+    socket.emit('startNewGame', gameInfo);
 })
 
 socket.on('createdGame', function(data){
-    $("#wait").show();
-    handleJoinedPlayer(data.names);
+    closeWaitingGame();
+    init(data);
 });
 
 // clean methods
@@ -145,6 +149,10 @@ function closeJoinGame(){
     $("#join").hide();
     $("#create_game").off("click");
     $("#join_game").off("click");
+}
+
+function closeWaitingGame(){
+    $("#wait").hide();
 }
 
 

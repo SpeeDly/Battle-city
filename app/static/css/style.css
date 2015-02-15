@@ -181,3 +181,30 @@ select {
     content: "BAD"; }
   #wait #bad li {
     background: red; }
+
+#start_real_game {
+  background: white;
+  border: 1px solid white;
+  height: 50px;
+  width: 100%;
+  margin-top: 20px;
+  font-size: 28px;
+  font-weight: 600;
+  color: white;
+  background: black;
+  cursor: pointer; }
+
+.block {
+  float: left;
+  background: black; }
+  .block.wall {
+    background: url("../img/bricks.png");
+    background-size: 48px; }
+  .block.grass {
+    background: url("../img/grass.png"); }
+  .block.water {
+    background: url("../img/water.gif"); }
+
+#tank_1 {
+  position: absolute;
+  width: 48px; }

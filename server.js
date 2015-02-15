@@ -3,6 +3,8 @@ var app = express();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var fs = require('fs');
+var path = require('path');
+
 
 app.get('/', function (req, res) {
     res.sendFile(__dirname + "/app/index.html");
@@ -14,14 +16,13 @@ http.listen(3000, function(){
     console.log("The server is working");
 });
 
-var blockStates{
+var blockStates = {
     0: "Free",
-    1: "Water",
-    2: "Bricks",
-    3: "Water",
-    4: "Grass",
-    5
+    1: "Bricks",
+    2: "Water",
+    3: "Grass"
 }
+
 var Block = function (row, col, state) {
     this.row = row;
     this.col = col;
@@ -53,19 +54,25 @@ var Map = function (filename) {
         tempArray = [],
         board = [];
 
-    file = fs.readFileSync(path.resolve(__dirname, './maps', filename)).split("/")
+    file = fs.readFileSync(path.resolve(__dirname, "./maps", filename), "utf8").split("\n");
+    console.log(file);
+    var counter = 0;
     file.forEach(function(rows){
+        rows = rows.split('');
         rows.forEach(function(el){
-            block = new Block(row, col, 0);
+            counter++;
+            block = new Block(row, col, parseInt(el));
             tempArray.push(block);
             col++;
         })
         board.push(tempArray);
+        tempArray = [];
         col = 0;
         row++;
     });
-
     this.board = board;
+    // console.log(this.board);
+    // console.log(counter);
 };
 
 var Player = function(room_id, name, socket_id){
@@ -76,8 +83,8 @@ var Player = function(room_id, name, socket_id){
     this.map;
     this.team = 0;
     this.direction = "top";
-    this.coords.left = 0;
-    this.coords.top = 0;
+    this.left = 0;
+    this.top = 0;
 }
 
 var Room = function(id, name){
@@ -126,12 +133,10 @@ Room.prototype.deleteAllPlayers = function() {
     };
 };
 
-Room.prototype.updatePlayer = function(id, team, direction, coords) {
+Room.prototype.initialPlayer = function(id, team, direction) {
     var player = this.getPlayerBySocketId(id);
     player.team = team;
     player.direction = direction;
-    player.coords.left = coords.left;
-    player.coords.top = coords.top;
 };
 
 
@@ -184,20 +189,23 @@ io.on('connection', function (socket) {
         room.addPlayer(data.name, socket.id);
         names = room.getPlayersNames();
         socket.join(room.name);
-        io.to(room.name).emit("joinedPlayer", {"names": names});
+        io.to(room.name).emit("joinedPlayer", {"room_id": room.id, "names": names});
     });
 
 
-    socket.on('startNewGame', function (data) {
-        var room = rooms[getRoomById(data.room_id)];
-        room.map = new Map(data.gameInfo.map);
+    socket.on('startNewGame', function (gameInfo) {
+        var room = getRoomById(gameInfo.room_id);
+        room.map = new Map(gameInfo.map);
 
-        data.gameInfo.players.forEach(function(player){
+        gameInfo.players.forEach(function(player){
             var direction = player.team === 0 ? "top" : "bottom";
-            room.updatePlayer(player.id, player.team, direction, null);
+            room.initialPlayer(player.id, player.team, direction);
         });
 
-        io.to(room.name).emit('createdGame', { board: map.board });
+        io.to(room.name).emit('createdGame', { 
+                                                'board': room.map.board,
+                                                'room': room
+                                              });
     });
 
     socket.on('newMove', function (data) {
@@ -230,7 +238,7 @@ io.on('connection', function (socket) {
             if(room){
                 room.removePlayerBySocketId(socket.id);
                 names = room.getPlayersNames();
-                io.to(room.name).emit("updatePlayers", {"names": names});
+                io.to(room.name).emit("updatePlayers", {"names": names, "room_id": room.id});
             }
         }
         else{
