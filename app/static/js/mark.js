@@ -22,19 +22,13 @@ Tank.prototype.regenerate = function(){
                     "top": pos.top,
                     "left": pos.left
                     });
+    // $("#tank_1").stop().animate({
+    //                 "top": pos.top,
+    //                 "left": pos.left
+    //                 }, 500);
 }
 
 Tank.prototype.go = function(direction){
-    // if(direction === 37){
-    // }
-    // else if(direction === 38){
-
-    // }
-    // else if(direction === 39){
-    // }
-    // else if(direction === 40){
-        
-    // }
     switch(direction){
         case 37:
             this.goLeft();
@@ -93,11 +87,11 @@ Tank.prototype.goTop = function(){
 }
 
 Tank.prototype.goBottom = function(){
-    var bottomElementState = $(".block[data-row=" + (this.topLeft.data("row") + 1) + "]")
+    var bottomElementState = $(".block[data-row=" + (this.topLeft.data("row") + 2) + "]")
                                 .filter("[data-col=" + this.topLeft.data("col") + "]").data("state");
 
-    var rightElementState = $(".block[data-row=" + (this.topLeft.data("row") + 1) + "]")
-                                .filter("[data-col=" + this.topLeft.next().data("col") + "]").data("state");
+    var rightElementState = $(".block[data-row=" + (this.topLeft.data("row") + 2) + "]")
+                                .filter("[data-col=" + this.topLeft.next().next().data("col") + "]").data("state");
 
     if(rightElementState == 0 && bottomElementState == 0){
         this.topLeft = $(".block[data-row=" + (this.topLeft.data("row") + 1) + "]")

@@ -205,6 +205,6 @@ select {
   .block.water {
     background: url("../img/water.gif"); }
 
-#tank_1 {
+.tank {
   position: absolute;
   width: 48px; }

@@ -111,11 +111,11 @@ function handleJoinedPlayer(names){
     names.forEach(function(data, i){
         if (i%2) {
             $("#bad").append("<li data-team='1' data-playerid=" + data.id + ">" + data.name + "</li>");
-            gameInfo.players.push({"player_id": data.id, "team": 1 });
+            gameInfo.players.push({"id": data.id, "team": 2 });
         }
         else{
             $("#good").append("<li data-team='0' data-playerid=" + data.id + ">" + data.name + "</li>");
-            gameInfo.players.push({"player_id": data.id, "team": 0 });
+            gameInfo.players.push({"id": data.id, "team": 1 });
         }
     });
 

@@ -55,7 +55,6 @@ var Map = function (filename) {
         board = [];
 
     file = fs.readFileSync(path.resolve(__dirname, "./maps", filename), "utf8").split("\n");
-    console.log(file);
     var counter = 0;
     file.forEach(function(rows){
         rows = rows.split('');
@@ -71,20 +70,54 @@ var Map = function (filename) {
         row++;
     });
     this.board = board;
-    // console.log(this.board);
-    // console.log(counter);
 };
 
 var Player = function(room_id, name, socket_id){
     this.socket_id = socket_id;
     this.room_id = room_id;
     this.name = name;
-    
-    this.map;
+
     this.team = 0;
-    this.direction = "top";
-    this.left = 0;
-    this.top = 0;
+    this.direction;
+    this.topLeft = undefined;
+    this.isShooted = false;
+}
+
+Player.prototype.go = function(direction){
+    var room = getRoomById(this.room_id);
+    var row = this.topLeft.row,
+        col = this.topLeft.col,
+        board = room.map.board;
+    switch(direction){
+        case 37:   //LEFT
+            if (col != 0 && board[row][col-1].state == 0 && board[row+1][col-1].state == 0) 
+            {
+                this.topLeft = board[row][col-1];
+                this.direction = "left";
+            };
+            break;
+        case 38:   //TOP
+            if (row != 0 && board[row-1][col].state == 0 && board[row-1][col+1].state == 0) 
+            {
+                this.topLeft = board[row-1][col];
+                this.direction = "top";
+            };
+            break;
+        case 39:   //RIGHT
+            if (row != 15 && board[row][col+2].state == 0 && board[row+1][col+2].state == 0) 
+            {
+                this.topLeft = board[row][col+1];
+                this.direction = "right";
+            };
+            break;
+        case 40:   //BOTTOM
+            if (col != 47 && board[row+2][col].state == 0 && board[row+2][col+1].state == 0) 
+            {
+                this.topLeft = board[row+1][col];
+                this.direction = "bottom";
+            };
+            break;
+    }
 }
 
 var Room = function(id, name){
@@ -102,7 +135,7 @@ Room.prototype.addPlayer = function(player_name, socket_id) {
 Room.prototype.getPlayersNames = function() {
     return this.players.map(function(player){
                 var temp = {};
-                temp.id = player.id;
+                temp.id = player.socket_id;
                 temp.name = player.name;
                 return temp;
             })
@@ -137,6 +170,16 @@ Room.prototype.initialPlayer = function(id, team, direction) {
     var player = this.getPlayerBySocketId(id);
     player.team = team;
     player.direction = direction;
+    this.map.board.forEach(function(rows){
+        rows.forEach(function(el){
+            if (team == 1 && el.state == 8 ||
+                team == 2 && el.state == 9)
+            {
+                el.state = 0;
+                player.topLeft = el;
+            };
+        });
+    });
 };
 
 
@@ -198,24 +241,27 @@ io.on('connection', function (socket) {
         room.map = new Map(gameInfo.map);
 
         gameInfo.players.forEach(function(player){
-            var direction = player.team === 0 ? "top" : "bottom";
+            var direction = player.team === 1 ? "top" : "bottom";
             room.initialPlayer(player.id, player.team, direction);
         });
-
-        io.to(room.name).emit('createdGame', { 
-                                                'board': room.map.board,
-                                                'room': room
+        io.to(room.name).emit('createdGame', {
+                                                'room': room,
                                               });
     });
 
     socket.on('newMove', function (data) {
-        var room_id = getRoomIDbyName(data.room);
-        var room = rooms[room_id];
-        var result = room.snakes[data.snake].go(data.command);
-        result.changedBlocks.push(room.map.generateApple());
-        if(result.gameResult !== -1){
-            result.gameResult = room.playerNames[result.gameResult];
-        }
+        // data contain - room, players
+        var room = getRoomById(data.room),
+            player = room.getPlayerBySocketId(data.player),
+            result = {};
+
+        player.go(data.command);
+
+        result.player = {};
+        result.player.id = player.socket_id;
+        result.player.topLeft = player.topLeft;
+        result.player.direction = player.direction;
+
         io.to(room.name).emit('nextMove', result);
     });
 
