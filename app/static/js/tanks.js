@@ -29,7 +29,7 @@ Player.prototype.regenerate = function(){
 
 Player.prototype.turn = function(){
     var degrees = 0;
-    switch(direction){
+    switch(this.direction){
         case "top":
             degrees = 90;
             break;
@@ -41,7 +41,7 @@ Player.prototype.turn = function(){
             break;
     }
 
-    $("#tank_1").css({'-webkit-transform' : 'rotate('+ degrees +'deg)',
+    $("#" + this.id).css({'-webkit-transform' : 'rotate('+ degrees +'deg)',
              '-moz-transform' : 'rotate('+ degrees +'deg)',
              '-ms-transform' : 'rotate('+ degrees +'deg)',
              'transform' : 'rotate('+ degrees +'deg)'});
@@ -111,8 +111,36 @@ Game.prototype.getPlayerById = function(id) {
 };
 
 Game.prototype.newMove = function(command){
-    console.log("this.player", this.player);
     socket.emit('newMove', {"room": this.room_id, "command": command, "player": this.player.id });
+}
+
+Game.prototype.drawBullet = function(bullet){
+    var id = makeid();
+    $("#game").append("<img src='/static/img/bullet.png' id='" + id + "' class='bullet'/>");
+    var pos = this.board[bullet.block1.row][bullet.block1.col].getElement().position();
+
+    $("#" + id).css({
+                    "top": pos.top,
+                    "left": pos.left
+                    });
+
+    switch(bullet.direction){
+        case "top":
+            degrees = 90;
+            break;
+        case "right":
+            degrees = 180;
+            break;
+        case "bottom":
+            degrees = 270;
+            break;
+    }
+
+    $("#" + id).css({'-webkit-transform' : 'rotate('+ degrees +'deg)',
+             '-moz-transform' : 'rotate('+ degrees +'deg)',
+             '-ms-transform' : 'rotate('+ degrees +'deg)',
+             'transform' : 'rotate('+ degrees +'deg)'});
+    
 }
 
 
@@ -159,3 +187,14 @@ Block.prototype.getElement = function() {
 function castToBlock(el) {
     return new Block(el.row, el.col, el.state, el.size);
 };
+
+function makeid()
+{
+    var text = "";
+    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+    for( var i=0; i < 5; i++ )
+        text += possible.charAt(Math.floor(Math.random() * possible.length));
+
+    return text;
+}

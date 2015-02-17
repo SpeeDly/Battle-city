@@ -28,23 +28,7 @@ var Block = function (row, col, state) {
     this.col = col;
     this.state = state;
     this.size = 8;
-    this.tank_id = -1;
 };
-
-Block.prototype.reserveByTank = function(snake_id){
-};
-
-Block.prototype.destroyBlock = function() {
-};
-
-Block.prototype.generateApple = function() {
-    this.state = 2;
-};
-
-Block.prototype.removeApple = function() {
-    this.state = 0;
-};
-
 
 var Map = function (filename) {
     var file,
@@ -72,6 +56,64 @@ var Map = function (filename) {
     this.board = board;
 };
 
+var Bullet = function(player){
+    this.room_id = player.room_id;
+    this.direction = player.direction;
+    this.block1;
+    this.block2;
+
+    var room = getRoomById(player.room_id);
+    var row = player.topLeft.row,
+        col = player.topLeft.col,
+        board = room.map.board;
+
+    switch(player.direction){
+        case "left":
+            this.block1 = player.topLeft;
+            this.block2 = board[row-1][col];
+            break;
+        case "top":
+            this.block1 = player.topLeft;
+            this.block2 = board[row][col+1];
+            break;
+        case "right":
+            this.block1 = board[row][col+1];
+            this.block2 = board[row+1][col+1];
+            break;
+        case "bottom":
+            this.block1 = board[row+1][col];
+            this.block2 = board[row+1][col+1];
+            break;
+    }
+}
+
+Bullet.prototype.next = function(){
+    var room = getRoomById(this.room_id);
+    var row = this.block1.row,
+        col = this.block1.col,
+        board = room.map.board;
+
+    switch(this.direction){
+        case "left":
+            this.block1 = board[row][col-1];
+            this.block2 = board[row-1][col-1];
+            break;
+        case "top":
+            this.block1 = board[row-1][col];
+            this.block2 = board[row-1][col+1];
+            break;
+        case "right":
+            this.block1 = board[row][col+1];
+            this.block2 = board[row][col+1];
+            break;
+        case "bottom":
+            this.block1 = board[row+1][col];
+            this.block2 = board[row+1][col+1];
+            break;
+    }
+}
+
+
 var Player = function(room_id, name, socket_id){
     this.socket_id = socket_id;
     this.room_id = room_id;
@@ -80,45 +122,22 @@ var Player = function(room_id, name, socket_id){
     this.team = 0;
     this.direction;
     this.topLeft = undefined;
-    this.isShooted = false;
+    this.bullet = undefined;
 }
 
-Player.prototype.go = function(direction){
-    var room = getRoomById(this.room_id);
-    var row = this.topLeft.row,
-        col = this.topLeft.col,
-        board = room.map.board;
-    switch(direction){
-        case 37:   //LEFT
-            if (col != 0 && board[row][col-1].state == 0 && board[row+1][col-1].state == 0) 
-            {
-                this.topLeft = board[row][col-1];
-                this.direction = "left";
-            };
-            break;
-        case 38:   //TOP
-            if (row != 0 && board[row-1][col].state == 0 && board[row-1][col+1].state == 0) 
-            {
-                this.topLeft = board[row-1][col];
-                this.direction = "top";
-            };
-            break;
-        case 39:   //RIGHT
-            if (row != 15 && board[row][col+2].state == 0 && board[row+1][col+2].state == 0) 
-            {
-                this.topLeft = board[row][col+1];
-                this.direction = "right";
-            };
-            break;
-        case 40:   //BOTTOM
-            if (col != 47 && board[row+2][col].state == 0 && board[row+2][col+1].state == 0) 
-            {
-                this.topLeft = board[row+1][col];
-                this.direction = "bottom";
-            };
-            break;
+Player.prototype.shot = function(){
+    this.bullet = new Bullet(this);
+}
+
+Player.prototype.moveBullet = function(){
+    try{
+        this.bullet.next();
+    }
+    catch(err){
+        this.bullet = undefined;
     }
 }
+
 
 var Room = function(id, name){
     this.id = id;
@@ -154,7 +173,7 @@ Room.prototype.removePlayerBySocketId = function(socket_id) {
     for (var i = 0; i < this.players.length; i++) {
         if (this.players[i].socket_id == socket_id) {
             delete this.players[i];
-            this.players.splice(i,1);
+            this.players.splicet(i,1);
             break;
         };
     };
@@ -182,6 +201,76 @@ Room.prototype.initialPlayer = function(id, team, direction) {
     });
 };
 
+Room.prototype.newMove = function(player, command){
+    var row = player.topLeft.row,
+        col = player.topLeft.col,
+        board = this.map.board,
+        bullets;
+
+    switch(command){
+        case 32:   //SPACE
+            if (player.bullet == undefined){
+                player.shot();
+            }
+            break;
+        case 37:   //LEFT
+            if (col != 0 &&
+                (board[row][col-1].state == 0 || board[row][col-1].state == 3) &&
+                (board[row+1][col-1].state == 0 || board[row+1][col-1].state == 3)
+               ) 
+            {
+                player.topLeft = board[row][col-1];
+                player.direction = "left";
+            }
+            break;
+        case 38:   //TOP
+            if (row != 0 &&
+                (board[row-1][col].state == 0 || board[row-1][col].state == 3) &&
+                (board[row-1][col+1].state == 0 || board[row-1][col+1].state == 3)
+               ) 
+            {
+                player.topLeft = board[row-1][col];
+                player.direction = "top";
+            };
+            break;
+        case 39:   //RIGHT
+            if (col != 47 &&
+                (board[row][col+2].state == 0 || board[row][col+2].state == 3) &&
+                (board[row+1][col+2].state == 0 || board[row+1][col+2].state == 3)
+               ) 
+            {
+                player.topLeft = board[row][col+1];
+                player.direction = "right";
+            };
+            break;
+        case 40:   //BOTTOM
+            if (row != 21 &&
+                (board[row+2][col].state == 0 || board[row+2][col].state == 3) && 
+                (board[row+2][col+1].state == 0 || board[row+2][col+1].state == 3)
+               ) 
+            {
+                player.topLeft = board[row+1][col];
+                player.direction = "bottom";
+            };
+            break;
+    }
+
+    bullets = this.updateAllBullets();
+    return bullets;
+}
+
+Room.prototype.updateAllBullets = function(){
+    var bullets = [];
+    this.players.forEach(function(player){
+        if (player.bullet != undefined) {
+            player.moveBullet();
+            if (player.bullet != undefined){
+                bullets.push(player.bullet);
+            }
+        }
+    })
+    return bullets;
+}
 
 var rooms = [];
 
@@ -250,19 +339,21 @@ io.on('connection', function (socket) {
     });
 
     socket.on('newMove', function (data) {
-        // data contain - room, players
+        // data contain - room, command, player
         var room = getRoomById(data.room),
             player = room.getPlayerBySocketId(data.player),
-            result = {};
+            move = {};
 
-        player.go(data.command);
+        bullets = room.newMove(player, data.command);
 
-        result.player = {};
-        result.player.id = player.socket_id;
-        result.player.topLeft = player.topLeft;
-        result.player.direction = player.direction;
+        // move.gameStatus = ;
+        move.player = {};
+        move.player.id = player.socket_id;
+        move.player.topLeft = player.topLeft;
+        move.player.direction = player.direction;
+        move.bullets = bullets;
 
-        io.to(room.name).emit('nextMove', result);
+        io.to(room.name).emit('nextMove', move);
     });
 
     socket.on('disconnect', function() {

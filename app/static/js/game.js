@@ -10,13 +10,20 @@ function init(data){
         player.direction = data.player.direction;
         player.topLeft = game.board[data.player.topLeft.row][data.player.topLeft.col];
         player.regenerate();
+
+        $(".bullet").remove();
+        data.bullets.forEach(function(bullet){
+            game.drawBullet(bullet);
+        })
     });
 
     $(document).keyup(function(event){
-        if (event.which === 38 || event.which === 37 || event.which === 39 || event.which === 40) {
+        if (event.which === 38 || event.which === 37 || event.which === 39 || event.which === 40 || event.which === 32) {
             game.newMove(event.which);
         };
     })
+}
+
 
 
     // command = 38;
@@ -41,4 +48,3 @@ function init(data){
     // socket.on('render', function (data) {
     //     e.render(data.board);
     // });
-}

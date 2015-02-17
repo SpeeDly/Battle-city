@@ -81,13 +81,18 @@ h1 {
       display: inline-block;
       width: 200px; }
     #menu li .tank {
+      position: static;
       display: inline-block;
       width: 32px;
       height: 32px;
       background: url("../img/tank1.png");
       background-size: 32 32;
       vertical-align: middle;
-      visibility: hidden; }
+      visibility: hidden;
+      -webkit-transform: rotate(180deg);
+      -moz-transform: rotate(180deg);
+      -ms-transform: rotate(180deg);
+      transform: rotate(180deg); }
     #menu li.active .tank {
       display: inline-block;
       width: 32px;
@@ -201,10 +206,18 @@ select {
     background: url("../img/bricks.png");
     background-size: 48px; }
   .block.grass {
-    background: url("../img/grass.png"); }
+    background: url("../img/grass.png");
+    position: relative;
+    z-index: 2; }
   .block.water {
     background: url("../img/water.gif"); }
 
 .tank {
   position: absolute;
-  width: 48px; }
+  width: 48px;
+  z-index: 1; }
+
+.bullet {
+  position: absolute;
+  width: 24px;
+  z-index: 3; }

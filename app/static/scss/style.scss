@@ -44,6 +44,7 @@ h1{
             width: 200px;
         }
         .tank{
+            position: static;
             display: inline-block;
             width: 32px;
             height: 32px;
@@ -51,6 +52,10 @@ h1{
             background-size: 32 32;
             vertical-align: middle;
             visibility: hidden;
+            -webkit-transform: rotate(180deg);
+            -moz-transform: rotate(180deg);
+            -ms-transform: rotate(180deg);
+            transform: rotate(180deg);
         }
         &.active .tank{
             display: inline-block;
@@ -190,6 +195,8 @@ select{
     }
     &.grass{
         background: url("../img/grass.png");
+        position: relative;
+        z-index: 2;
     }
     &.water{
         background: url("../img/water.gif");
@@ -199,4 +206,11 @@ select{
 .tank{
     position: absolute;
     width: 48px;
+    z-index: 1;
+}
+
+.bullet{
+    position: absolute;
+    width: 24px;
+    z-index: 3;
 }
