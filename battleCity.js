@@ -5,15 +5,14 @@ var Block = function (row, col, state) {
     this.size = 8;
 };
 
-var Map = function (filename) {
-    var file,
-        block,
+var Map = function (file) {
+    var block,
         row = 0,
         col = 0,
         tempArray = [],
         board = [];
 
-    file = fs.readFileSync(path.resolve(__dirname, "./maps", filename), "utf8").split("\n");
+
     var counter = 0;
     file.forEach(function(rows){
         rows = rows.split('');
@@ -37,7 +36,7 @@ var Bullet = function(player){
     this.block1;
     this.block2;
 
-    var room = getRoomById(player.room_id);
+    var room = Game.getRoomById(player.room_id);
     var row = player.topLeft.row,
         col = player.topLeft.col,
         board = room.map.board;
@@ -63,7 +62,7 @@ var Bullet = function(player){
 }
 
 Bullet.prototype.next = function(){
-    var room = getRoomById(this.room_id);
+    var room = Game.getRoomById(this.room_id);
     var row = this.block1.row,
         col = this.block1.col,
         board = room.map.board;
@@ -111,25 +110,32 @@ Player.prototype.shot = function(){
 }
 
 Player.prototype.moveBullet = function(){
-    var changed_blocks = [];
+    var room = Game.getRoomById(this.room_id),
+        changed_blocks = [],
+        player_team = this.team;
 
     if(this.bullet != undefined){
         try{
             this.bullet.next();
-            if (this.bullet.block1.state == 1 || this.bullet.block2.state == 1) {
-                if(this.bullet.block1.state == 1) this.bullet.block1.state = 0;
-                if(this.bullet.block2.state == 1) this.bullet.block2.state = 0;
+            var block1 = this.bullet.block1,
+                block2 = this.bullet.block2,
+                hits = room.checkForHit(block1, block2);
 
-                changed_blocks = changed_blocks.concat([this.bullet.block1, this.bullet.block2]);
+            if (block1.state == 1 || block2.state == 1) {
+                if(block1.state == 1) block1.state = 0;
+                if(block2.state == 1) block2.state = 0;
+
+                changed_blocks = changed_blocks.concat([block1, block2]);
                 this.bullet = undefined;
             }
 
-            if (this.bullet.block1.state == 1 || this.bullet.block2.state == 1) {
-                if(this.bullet.block1.state == 1) this.bullet.block1.state = 0;
-                if(this.bullet.block2.state == 1) this.bullet.block2.state = 0;
-
-                changed_blocks = changed_blocks.concat([this.bullet.block1, this.bullet.block2]);
-                this.bullet = undefined;
+            if (hits.length > 0) {
+                for (var i = 0; i < hits.length; i++) {
+                    if(hits[i].team != player_team){
+                        this.points++;
+                        this.bullet = undefined;
+                    }
+                };
             }
         }
         catch(err){
@@ -184,6 +190,41 @@ Room.prototype.deleteAllPlayers = function() {
     for (var i = 0; i < this.players.length; i++) {
         delete this.players[i];
     };
+};
+
+Room.prototype.checkForHit = function(block1, block2) {
+    var takenPosition = this.getAllTakenPosition(),
+        result = [],
+        block;
+    takenPosition.forEach(function(pos){
+        for (var i = 0; i < pos.blocks.length; i++) {
+            block = pos.blocks[i];
+            if(block1 == block || block1 == block){
+                result.push(pos);
+            }
+        };
+    })
+
+    return result;
+};
+
+Room.prototype.getAllTakenPosition = function() {
+    var positions = [];
+    var board = this.map.board;
+    this.players.forEach(function(player){
+        var topLeft = player.topLeft;
+        var pos = {
+            team: player.team,
+            blocks: []
+        };
+        pos.blocks.push(topLeft);
+        pos.blocks.push(board[topLeft.row][topLeft.col+1]);
+        pos.blocks.push(board[topLeft.row+1][topLeft.col+1]);
+        pos.blocks.push(board[topLeft.row+1][topLeft.col]);
+
+        positions.push(pos);
+    })
+    return positions;
 };
 
 Room.prototype.initializePlayer = function(id, team, direction) {
@@ -282,3 +323,41 @@ Room.prototype.updateAllBullets = function(){
     })
     return update;
 }
+
+var Game = {
+    "rooms": []
+}
+
+Game.getRoomByName = function (name){
+    var room = false;
+    this.rooms.forEach(function(r){
+        if (name === r.name) {
+            room = r;
+        }
+    });
+    return room;
+}
+
+Game.getRoomById = function(id){
+    var room = false;
+    this.rooms.forEach(function(r){
+        if (id === r.id) {
+            room = r;
+        }
+    });
+    return room;
+}
+
+Game.newRoom = function(id, room_name){
+    var room = new Room(id, room_name);
+    this.rooms.push(room);
+    return room;
+}
+
+Game.generateMap = function(id, map){
+    var room = this.getRoomById(id);
+    room.map = new Map(map);
+    return room;
+}
+
+exports.Game = Game;

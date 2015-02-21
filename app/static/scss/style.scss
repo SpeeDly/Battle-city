@@ -121,13 +121,20 @@ select{
         cursor: pointer;
     }
     #rooms{
+        min-height: 200px;
+        border: 5px solid rgb(102, 102, 102);
+        border-radius: 10px;
         background: white;
-        resize: both;
         overflow: auto;
         color: black;
         .room.active{
             background: black;
             color: white;
+        }
+        .room{
+            padding: 5px;
+            padding-left: 10px;
+            border-bottom: 2px solid rgb(102, 102, 102);
         }
     }
     i{
@@ -148,23 +155,25 @@ select{
     }
     .teaming{
         padding-top: 20px;
-        display: inline-block;
+        float: left;
         width: 300px;
         background: white;
         min-height: 300px;
+        font-size: 24px;
+        text-align: center;
         &:before{
-            content: "GOOD";
+            content: "TEAM 1";
             color: black;
             display: block;
             text-align: center;
         }
         li{
-            background: green;
+            background: blue;
         }
     }
     #bad{
         &:before{
-            content: "BAD";
+            content: "TEAM 2";
         }
         margin-left: 50px;
         li{
@@ -213,4 +222,34 @@ select{
     position: absolute;
     width: 24px;
     z-index: 3;
+}
+
+.scores{
+    clear: both;
+    .head{
+        float: left;
+        font-size: 72px;
+    }
+    .team1{
+        margin-left: 160px;
+        color: blue;
+    }
+    .team2{
+        color: red;
+    }
+
+    #team1, #team2{
+        float: left;
+        font-size: 27px;
+        span{
+            margin-left: 20px;
+        }
+    }
+    #team1{
+        color: blue;
+        margin-right: 100px;
+    }
+    #team2{
+        color: red;
+    }
 }

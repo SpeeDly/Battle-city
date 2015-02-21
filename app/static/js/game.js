@@ -12,6 +12,7 @@ function init(data){
 
         player.direction = data.player.direction;
         player.topLeft = game.board[data.player.topLeft.row][data.player.topLeft.col];
+        player.points = data.player.points;
         player.regenerate();
 
         $(".bullet").remove();
@@ -21,7 +22,7 @@ function init(data){
         })
 
         game.updateBoard(changed_blocks);
-
+        game.refreshScore();
     });
 
     $(document).keyup(function(event){

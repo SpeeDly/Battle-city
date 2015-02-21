@@ -6,6 +6,7 @@ var Player = function(id, game, name, team, topLeft, direction){
     this.topLeft = topLeft;
     this.isShooted = false;
     this.direction = direction;
+    this.points = 0;
 }
 
 Player.prototype.generate = function(){
@@ -15,6 +16,7 @@ Player.prototype.generate = function(){
                     "top": pos.top,
                     "left": pos.left
                     });
+    $("#team" + this.team).append("<li class='" + this.id + "'>" + this.name + "<span>" + this.points + "</span></li>");
     this.turn();
 }
 
@@ -24,6 +26,7 @@ Player.prototype.regenerate = function(){
                     "top": pos.top,
                     "left": pos.left
                     });
+    $("." + this.id + " span").html(this.points);
     this.turn();
 }
 
@@ -76,7 +79,7 @@ var Game = function(room){
         }
     });
     this.player = temp_player;
-    this.players = players
+    this.players = players;
 }
 
 Game.prototype.generate = function() {
@@ -93,6 +96,21 @@ Game.prototype.generate = function() {
     })
 
     this.generatePlayers();
+}
+
+Game.prototype.refreshScore = function() {
+    var team1_score = 0,
+        team2_score = 0;
+    this.players.forEach(function(player){
+        if(player.team == 1){
+            team1_score = team1_score + player.points;
+        }
+        else{
+            team2_score = team2_score + player.points;
+        }
+    })
+    $(".team1").text(team1_score);
+    $(".team2").text(team2_score);
 }
 
 Game.prototype.generatePlayers = function() {
