@@ -114,14 +114,24 @@ Game.prototype.newMove = function(command){
     socket.emit('newMove', {"room": this.room_id, "command": command, "player": this.player.id });
 }
 
+Game.prototype.updateBoard = function(blocks){
+    for (var i = 0; i < blocks.length; i++) {
+        var block = blocks[i];
+        var realBlock = this.board[block.row][block.col];
+        realBlock.state = block.state;
+        realBlock.update();
+    };
+}
+
 Game.prototype.drawBullet = function(bullet){
     var id = makeid();
+    var degrees;
     $("#game").append("<img src='/static/img/bullet.png' id='" + id + "' class='bullet'/>");
     var pos = this.board[bullet.block1.row][bullet.block1.col].getElement().position();
 
     $("#" + id).css({
-                    "top": pos.top,
-                    "left": pos.left
+                    "top": pos.top + 12,
+                    "left": pos.left + 12
                     });
 
     switch(bullet.direction){
@@ -178,6 +188,25 @@ Block.prototype.draw = function() {
     pixel += this.state;
     pixel += '"></div>';
     $("#game").append(pixel);
+};
+
+Block.prototype.update = function() {
+    var $el = this.getElement();
+    $el.data("state", this.state);
+    $el.removeClass();
+    $el.addClass("block");
+    if(this.state === 1){
+        $el.addClass('wall');
+    }
+    else if(this.state === 2){
+        $el.addClass('water');
+    }
+    else if(this.state === 3){
+        $el.addClass('grass');
+    }
+    else{
+        $el.addClass('');
+    }
 };
 
 Block.prototype.getElement = function() {
